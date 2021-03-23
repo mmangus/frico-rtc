@@ -1,11 +1,12 @@
-from frico.i2c_device import I2CDevice
+from frico.devices import I2CDevice
+
 from .blocks import (
-    Clock,
     Alarm1,
     Alarm1Config,
     Alarm2,
     Alarm2Config,
-    Temperature
+    Clock,
+    Temperature,
 )
 
 
@@ -15,7 +16,9 @@ class DS3231(I2CDevice):
 
     Datasheet: https://datasheets.maximintegrated.com/en/ds/DS3231.pdf
     """
+
     I2C_ADDRESS = 0x68  # I2C device address for DS3231
+    I2C_READ_START = 0x00
     I2C_READ_LEN = 0x13  # data repeats after 0x12, so only read 0x13 bytes
 
     # See page 11 of the datasheet for register layout details

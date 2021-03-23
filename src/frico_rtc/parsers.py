@@ -1,44 +1,45 @@
-from abc import ABC, abstractmethod
-from states import (
-    List,
-    NoReturn,
-    Type,
-)
+from abc import abstractmethod
+from typing import List, NoReturn, Type
 
 from frico.bitstring import BitString
-from frico.parsers import RegisterParser, BCDParser, FlagParser
+from frico.parsers import BCDParser, FlagParser, RegisterParser
 from frico.typing import RegisterState
 
 from .states import (
-    AlarmConfigState,
     Alarm1ConfigState,
     Alarm2ConfigState,
+    AlarmConfigState,
     DayConfigState,
 )
 
 
 class SecondParser(BCDParser):
     """Parser for registers representing seconds on DS-series RTCs."""
+
     bcd_bounds = ((1, 4), (4, 8))
 
 
 class MinuteParser(BCDParser):
     """Parser for registers representing minutes on DS-series RTCs."""
+
     bcd_bounds = ((1, 4), (4, 8))
 
 
 class DayOfMonthParser(BCDParser):
     """Parser for registers representing day of the month on DS-series RTCs."""
+
     bcd_bounds = ((2, 4), (4, 8))
 
 
 class DayOfWeekParser(BCDParser):
     """Parser for registers representing day of the week on DS-series RTCs."""
-    bcd_bounds = ((5, 8), )
+
+    bcd_bounds = ((5, 8),)
 
 
 class MonthParser(BCDParser):
     """Parser for registers representing the month on DS-series RTCs."""
+
     bcd_bounds = ((3, 4), (4, 8))
 
 
@@ -49,6 +50,7 @@ class HourParser(RegisterParser[int]):
     This requires two different calculations depending on whether the 24-hour
     mode bit is set.
     """
+
     def _value(self) -> int:
         if self._local_bytes[0][1]:  # 12h mode
             hours = self._local_bytes[0].decode_bcd((3, 4), (4, 8))
@@ -59,7 +61,6 @@ class HourParser(RegisterParser[int]):
         hour_tens = self._local_bytes[0][2] * 2 + self._local_bytes[0][3]
         hour_ones = self._local_bytes[0][4:]
         return 10 * hour_tens + hour_ones
-
 
     def _prepare_update(self, value: int) -> RegisterState:
         new_bitstring = BitString.encode_bcd(value, (3, 4))
@@ -75,6 +76,7 @@ class YearParser(RegisterParser[int]):
     Century (+100 or not) is represented with 1 bit in the first register and
     the year from 00-99 is simple BCD in the second register.
     """
+
     def _value(self) -> int:
         return (
             2000
@@ -90,10 +92,10 @@ class YearParser(RegisterParser[int]):
         value -= 2000  # RTC only stores the last 3 digits
         new_state: List[BitString] = []
         if value >= 100:  # Adjust the century bit as necessary
-            new_state.append(self._local_bytes[0].replace(0, BitString('1')))
+            new_state.append(self._local_bytes[0].replace(0, BitString("1")))
             value -= 100
         else:
-            new_state.append(self._local_bytes[0].replace(0, BitString('0')))
+            new_state.append(self._local_bytes[0].replace(0, BitString("0")))
         new_state.append(BitString.encode_bcd(value))
         return new_state
 
@@ -105,6 +107,7 @@ class TemperatureParser(RegisterParser[float]):
     Twos-compliment signed integer in the first register with a fractional part
     stored as 2 bits in units of 0.25 degrees in the second register.
     """
+
     def _value(self) -> float:
         integer_part = self._local_bytes[0].decode_bcd((1, 8))
         if self._local_bytes[0][0]:  # sign bit set, convert 2s compliment
@@ -136,6 +139,7 @@ class AlarmConfigParser(RegisterParser[AlarmConfigState]):
     Parser for Alarm configuration mask stored in the first bits of 0x07-0x0xA
     and 0x0B-0x0D
     """
+
     @property
     @abstractmethod
     def config_cls(self) -> Type[AlarmConfigState]:
@@ -150,7 +154,8 @@ class AlarmConfigParser(RegisterParser[AlarmConfigState]):
         if not isinstance(value, self.config_cls):
             raise TypeError(
                 f"Invalid config: expected a {self.config_cls} instance but "
-                f"got {value}")
+                f"got {value}"
+            )
         # "transpose" the bits into the first position of each register
         new_state = [
             self._local_bytes[i].replace(0, BitString(b))
