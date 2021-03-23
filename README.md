@@ -22,8 +22,14 @@ make
 Run `make test` to validate changes (or use the commit hooks).
 
 ## Usage
-
 ```python
+from datetime import datetime
 from frico_rtc.devices import DS3231
-
+rtc = DS3231()
+# read time from RTC
+print(rtc.time)  
+# set time on RTC
+rtc.time = datetime.now()
+# check alarm config
+print(rtc.alarm1config)
 ```
