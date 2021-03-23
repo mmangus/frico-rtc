@@ -27,9 +27,9 @@ from datetime import datetime
 from frico_rtc.devices import DS3231
 rtc = DS3231()
 # read time from RTC
-print(rtc.time)  
+print(rtc.clock)  
 # set time on RTC
-rtc.time = datetime.now()
+rtc.clock = datetime.now()
 # check alarm config
 print(rtc.alarm1config)
 ```
